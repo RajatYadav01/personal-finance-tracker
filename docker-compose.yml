@@ -1,0 +1,93 @@
+services:
+  personal-finance-tracker-database:
+    container_name: personal-finance-tracker-database
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=personal_finance_tracker
+      - POSTGRES_PASSWORD=165692018
+      - POSTGRES_DB=personal_finance_tracker
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5440:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "personal_finance_tracker"]
+      interval: 60s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - personal-finance-tracker
+
+  personal-finance-tracker-redis:
+    container_name: personal-finance-tracker-redis
+    image: redis:7
+    restart: always
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - personal-finance-tracker
+
+  personal-finance-tracker-sidekiq:
+    container_name: personal-finance-tracker-backend-sidekiq
+    build:
+      context: ./personal_finance_tracker_backend
+      dockerfile: Dockerfile
+    image: personal-finance-tracker-sidekiq-rails:latest
+    command: bundle exec sidekiq
+    environment:
+      - REDIS_URL=redis://personal-finance-tracker-redis:6379/0
+      - FRONTEND_HOST_URL=http://localhost:5180
+      - DATABASE_HOST=personal-finance-tracker-database
+    ports:
+      - "5005:5000"
+    depends_on:
+      - personal-finance-tracker-database
+      - personal-finance-tracker-redis
+    networks:
+      - personal-finance-tracker
+
+  personal-finance-tracker-backend:
+    container_name: personal-finance-tracker-backend
+    build:
+      context: ./personal_finance_tracker_backend
+      dockerfile: Dockerfile
+    image: personal-finance-tracker-rails-backend:latest
+    environment:
+      - FRONTEND_HOST_URL=http://localhost:5180
+      - DATABASE_HOST=personal-finance-tracker-database
+    depends_on:
+      - personal-finance-tracker-database
+    volumes:
+      - backend-data:/app/personal_finance_tracker_backend/data
+    ports:
+      - "5010:5000"
+    networks:
+      - personal-finance-tracker
+
+  personal-finance-tracker-frontend:
+    container_name: personal-finance-tracker-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_API_URL: http://localhost:5010/api/v1
+    image: personal-finance-tracker-react-frontend:latest
+    depends_on:
+      - personal-finance-tracker-backend
+    ports:
+      - "5180:80"
+    networks:
+      - personal-finance-tracker
+
+volumes:
+  db-data:
+  backend-data:
+  redis-data:
+
+networks:
+  personal-finance-tracker:
+    driver: bridge

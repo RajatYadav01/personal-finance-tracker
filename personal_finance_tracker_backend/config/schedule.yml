@@ -1,0 +1,3 @@
+recurring_transactions_worker:
+  cron: "*/5 * * * *" # every 5 minutes
+  class: "RecurringTransactionsWorker"
