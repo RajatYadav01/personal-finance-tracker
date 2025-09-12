@@ -179,9 +179,9 @@ To modify and use this project locally on your system, follow these steps:
 
 10. Run the database migrations for the Rails application.
 
-   ```shell
-   bin/rails db:migrate
-   ```
+    ```shell
+    bin/rails db:migrate
+    ```
 
 11. Open a different instance of the CLI in the code editor that you are using and run the Rails server.
 
@@ -223,4 +223,4 @@ To setup the project using Docker:
    docker-compose up --build
    ```
 
-4. After all the containers have been started, open any browser and go to `http://localhost:5173` to access the application.
+4. After all the containers have been started, open any browser and go to `http://localhost:5180` to access the application.
